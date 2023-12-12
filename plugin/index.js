@@ -1,20 +1,36 @@
 import path from "node:path";
 import fs from "node:fs";
-// import { fileURLToPath } from "node:url";
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const CACHE = new Map();
+const AVAILABLE_INJECTION_TYPES = ["str", "number", "number", "bool"];
+let entrypointAlreadyChecked = false;
 
 const isEntrypointValid = (entrypoint) =>
   fs.existsSync(entrypoint) && fs.readdirSync(entrypoint).length > 0;
 
+const isObj = (obj) =>
+  typeof obj === "object" && !Array.isArray(obj) && obj !== null;
+
 function getJsonFile(entrypoint, filename) {
+  if (CACHE.has(filename)) {
+    return JSON.parse(CACHE.get(filename));
+  }
+
   const filePath = path.resolve(entrypoint, filename + ".json");
+  const fileExists = fs.existsSync(filePath);
 
-  return JSON.parse(fs.readFileSync(filePath, { encoding: "utf-8" }));
+  if (!fileExists) {
+    CACHE.set(filename, null);
+
+    return null;
+  }
+
+  const content = fs.readFileSync(filePath, { encoding: "utf-8" }) || null;
+
+  CACHE.set(filename, content);
+
+  return JSON.parse(content);
 }
-
-const isPlaceholderFn = (path) => path.node.callee.name === "constant";
 
 function wrap(str) {
   return '"' + str + '"';
@@ -27,32 +43,92 @@ function InlineConstantsPlugin() {
       CallExpression(path, { opts }) {
         const entrypoint = opts.constants;
 
-        if (!isEntrypointValid(entrypoint)) {
-          throw new Error("`constants` path is empty");
+        if (!entrypointAlreadyChecked) {
+          if (!isEntrypointValid(entrypoint)) {
+            throw new Error("`constants` path is invalid!");
+          }
+
+          entrypointAlreadyChecked = true;
         }
 
-        if (isPlaceholderFn(path)) {
-          const constantPath = path.node.arguments[0].value;
-          const keys = path.node.arguments[0].value
-            .split(".")
-            .map((str) => str.trim());
+        const objectName = path.node.callee.object?.name;
+        const propertyName = path.node.callee.property?.name;
+        const firstArgument = path.node.arguments[0]?.value;
 
-          const file = keys.shift();
+        if (objectName !== "constant") {
+          return;
+        }
 
-          const constants = getJsonFile(entrypoint, file);
-          let temp = constants;
+        if (!AVAILABLE_INJECTION_TYPES.includes(propertyName)) {
+          throw new Error("invalid property type!");
+        }
 
-          for (const key of keys) {
-            temp = temp[key];
-          }
+        if (!firstArgument || typeof firstArgument !== "string") {
+          throw new Error("first argument should be an string!");
+        }
 
-          const strToReplace = temp;
+        const keys = firstArgument.split(".").map((str) => str.trim());
+        const file = keys.shift();
+        const availableConstants = getJsonFile(entrypoint, file);
 
-          if (!strToReplace) {
-            throw new Error(`${constantPath} not found!`);
-          }
+        if (!availableConstants) {
+          throw new Error(`file ${file} is empty!`);
+        }
 
-          path.replaceWithSourceString(wrap(strToReplace));
+        let temp = availableConstants;
+
+        for (const key of keys) {
+          console.log(temp);
+          temp = temp[key] || null;
+        }
+
+        const valueToReplace = temp;
+
+        if (!valueToReplace) {
+          throw new Error("constant not found!");
+        }
+
+        // TODO fix bugs, only str works
+        switch (propertyName) {
+          case "str":
+            if (typeof valueToReplace !== "string") {
+              throw new Error(`invalid typeof ${valueToReplace}, expected str`);
+            }
+
+            path.replaceWithSourceString(wrap(valueToReplace));
+            break;
+          case "enum":
+            if (!isObj(valueToReplace)) {
+              throw new Error(
+                `invalid typeof ${valueToReplace}, expected enum`
+              );
+            }
+
+            path.replaceWith(valueToReplace);
+            break;
+          case "number":
+            if (typeof valueToReplace !== "number") {
+              throw new Error(
+                `invalid typeof ${valueToReplace}, expected number`
+              );
+            }
+
+            console.log({ valueToReplace });
+            path.replaceWith(valueToReplace);
+            break;
+          case "bool":
+            if (typeof valueToReplace !== "boolean") {
+              throw new Error(
+                `invalid typeof ${valueToReplace}, expected bool`
+              );
+            }
+
+            path.replace(valueToReplace);
+            break;
+
+          default:
+            // do nothing
+            break;
         }
       },
       // purge import of noop function

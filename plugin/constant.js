@@ -1,6 +1,15 @@
 // placeholder noop, utilized to avoid lint issues only
-function constant(constant) {
-  return "";
+const constant = {
+  bool: () => true,
+  enum: () => ({}),
+  number: () => 0,
+  str: () => "",
+};
+
+if (window !== null) {
+  window.constant = constant;
 }
 
-window.constant = constant;
+if (globalThis !== null) {
+  globalThis.constant = constant;
+}

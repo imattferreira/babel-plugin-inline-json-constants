@@ -1,0 +1,18 @@
+{
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "targets": {
+          "node": "current"
+        }
+      }
+    ]
+  ],
+  "plugins": [
+    [
+      "../packages/babel-plugin-inline-constants/index.js",
+      { "constants": "./src/constants" }
+    ]
+  ]
+}

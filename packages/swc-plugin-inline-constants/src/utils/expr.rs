@@ -3,9 +3,10 @@ use swc_core::ecma::ast::{Ident, KeyValueProp, Null, ObjectLit, Prop, PropName, 
 use swc_core::ecma::visit::*;
 use swc_ecma_ast::{ArrayLit, Bool, CallExpr, Callee, Expr, ExprOrSpread, Lit, Number, Str};
 use swc_ecma_utils::swc_common::{Span, DUMMY_SP};
+use serde_json::Value;
 
 // NumericLiteral
-fn to_number_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
+fn to_number_expr(value: &Value, span: Span) -> Box<Expr> {
     Box::new(Expr::Lit(Lit::Num(Number {
         span,
         value: value.as_f64().unwrap().into(),
@@ -14,7 +15,7 @@ fn to_number_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
 }
 
 // StringLiteral
-fn to_str_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
+fn to_str_expr(value: &Value, span: Span) -> Box<Expr> {
     Box::new(Expr::Lit(Lit::Str(Str {
         raw: Some(Atom::new(value.as_str().unwrap())),
         span,
@@ -23,7 +24,7 @@ fn to_str_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
 }
 
 // BooleanLiteral
-fn to_bool_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
+fn to_bool_expr(value: &Value, span: Span) -> Box<Expr> {
     Box::new(Expr::Lit(Lit::Bool(Bool {
         span,
         value: value.as_bool().unwrap(),
@@ -36,7 +37,7 @@ fn to_null_expr(span: Span) -> Box<Expr> {
 }
 
 // ArrayExpression
-fn to_array_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
+fn to_array_expr(value: &Value, span: Span) -> Box<Expr> {
     let elems = value
         .as_array()
         .unwrap()
@@ -48,7 +49,7 @@ fn to_array_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
 }
 
 // ObjectLiteral
-fn to_obj_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
+fn to_obj_expr(value: &Value, span: Span) -> Box<Expr> {
     let props = value
         .as_object()
         .unwrap()
@@ -64,7 +65,7 @@ fn to_obj_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
     Box::new(Expr::Object(ObjectLit { span, props }))
 }
 
-fn to_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
+fn to_expr(value: &Value, span: Span) -> Box<Expr> {
     if value.is_boolean() {
         return to_bool_expr(value, span);
     }
@@ -88,14 +89,14 @@ fn to_expr(value: &serde_json::Value, span: Span) -> Box<Expr> {
     to_str_expr(value, span)
 }
 
-fn to_expr_or_spread(value: &serde_json::Value) -> Option<ExprOrSpread> {
+fn to_expr_or_spread(value: &Value) -> Option<ExprOrSpread> {
     Some(ExprOrSpread {
         expr: to_expr(value, DUMMY_SP),
         spread: None,
     })
 }
 
-pub fn to_call_expr(value: &serde_json::Value, span: Span) -> CallExpr {
+pub fn to_call_expr(value: &Value, span: Span) -> CallExpr {
     CallExpr {
         callee: Callee::Expr(to_expr(value, DUMMY_SP)),
         args: vec![],

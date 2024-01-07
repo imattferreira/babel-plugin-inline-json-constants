@@ -1,0 +1,77 @@
+{
+  "type": "Module",
+  "span": {
+    "start": 0,
+    "end": 49,
+    "ctxt": 0
+  },
+  "body": [
+    {
+      "type": "VariableDeclaration",
+      "span": {
+        "start": 0,
+        "end": 49,
+        "ctxt": 0
+      },
+      "kind": "const",
+      "declare": false,
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "span": {
+            "start": 6,
+            "end": 48,
+            "ctxt": 0
+          },
+          "id": {
+            "type": "Identifier",
+            "span": {
+              "start": 6,
+              "end": 13,
+              "ctxt": 2
+            },
+            "value": "timeout",
+            "optional": false,
+            "typeAnnotation": null
+          },
+          "init": {
+            "type": "CallExpression",
+            "span": {
+              "start": 16,
+              "end": 48,
+              "ctxt": 0
+            },
+            "callee": {
+              "type": "Identifier",
+              "span": {
+                "start": 16,
+                "end": 27,
+                "ctxt": 1
+              },
+              "value": "constantify",
+              "optional": false
+            },
+            "arguments": [
+              {
+                "spread": null,
+                "expression": {
+                  "type": "StringLiteral",
+                  "span": {
+                    "start": 28,
+                    "end": 47,
+                    "ctxt": 0
+                  },
+                  "value": "TIMES.SECONDS.TEN",
+                  "raw": "\"TIMES.SECONDS.TEN\""
+                }
+              }
+            ],
+            "typeArguments": null
+          },
+          "definite": false
+        }
+      ]
+    }
+  ],
+  "interpreter": null
+}

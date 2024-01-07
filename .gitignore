@@ -1,2 +1,8 @@
+# JS stuff
 dist/
 node_modules/
+
+# Rust stuff
+/target
+^target/
+target

@@ -1,14 +1,16 @@
 /**
  * TODO
  * - add possibility to customize constants dir entrypoint
+ * - debug
+ * - script not working
  * - TEST THIS SHIT!
  */
 mod utils;
-
 use swc_core::ecma::visit::*;
 use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata};
 use swc_ecma_ast::{CallExpr, Callee, Expr, Program};
 use swc_ecma_visit::Fold;
+use tracing::{event, Level};
 use utils::array::{last_index, split};
 use utils::brain;
 use utils::expr::to_call_expr;
@@ -20,6 +22,8 @@ pub struct TransformFold;
 impl Fold for TransformFold {
     fn fold_call_expr(&mut self, call_expr: CallExpr) -> CallExpr {
         let dumped = call_expr.clone();
+
+        event!(Level::DEBUG, "Hello World");
 
         if let Callee::Expr(callee) = call_expr.callee {
             let ident = callee.ident();
@@ -84,17 +88,3 @@ impl Fold for TransformFold {
 pub fn process_transform(program: Program, _metadata: TransformPluginProgramMetadata) -> Program {
     program.fold_with(&mut TransformFold)
 }
-
-// An example to test plugin transform.
-// Recommended strategy to test plugin's transform is verify
-// the Visitor's behavior, instead of trying to run `process_transform` with mocks
-// unless explicitly required to do so.
-// test!(
-//     Default::default(),
-//     |_| as_folder(TransformVisitor),
-//     simple_transform_global_var,
-//     // Input codes
-//     r#"const msg = constant.str("APP.MESSAGE");"#,
-//     // Output codes after transformed with plugin
-//     r#"const msg = false;"#
-// );

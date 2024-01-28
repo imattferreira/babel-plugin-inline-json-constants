@@ -6,6 +6,3 @@ node_modules/
 /target
 ^target/
 target
-
-# OS stuff
-.DS_Store
